@@ -1,0 +1,19 @@
+<html>
+    <head>
+        <title>
+            Pathfinding in TypeScript
+        </title>
+        <meta charset = "UTF-8"/>
+        <script src = "./scripts/pathfinder_v2.js"></script>
+        <link href = "./styles/style.css" rel = "stylesheet"/>
+    </head>
+    <body>
+        <div id = "board"></div>
+        <button onclick = "brd.set_tool('wall')">WALL</button><br/>
+        <button onclick = "brd.set_tool('start')">START</button><br/>
+        <button onclick = "brd.set_tool('destination')">END</button><br/>
+        <button onclick = "brd.set_tool('empty')">DELETE</button><br/>
+        <button onclick = "(()=>{var a = new pathfinder(brd.tiles); brd.draw_path(a.decode(a.find_path()));})()">FIND PATH</button><br/>
+    </body>
+    <script src = "./scripts/main.js"></script>
+</html>
