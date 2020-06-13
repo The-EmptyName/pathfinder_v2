@@ -4,13 +4,14 @@ class pathfinder {
     private paths_2: string[] = [];
     private correct: string = "";
     private found: boolean = false;
+    private cleared: boolean = false;
+    private start: string[] = [];
     constructor( private b: string[][] ) {
         this.board = b;
         if ( !this.find("S") || !this.find("D") ) {
             alert("Add both starting point and destination.");
             return;
         }
-        console.log(this.find("S"));
     }
     private find(element: string): any {
         for ( var y = 0; y < this.board.length; y ++ ) {
@@ -22,17 +23,24 @@ class pathfinder {
         }
         return false;
     }
-    private find_path(start: string[] = this.find("S"), end: string[] = this.find("D")): string {
+    public find_path(start: string[] = this.find["S"]): string {
+        this.start = start;
         for ( var i = 0; i < this.board.length * this.board[0].length; i ++ ) {
             for ( var n = 0; n < this.paths_1.length; n ++ ) {
-                if ( !this.found ) {
+                if ( !this.found && this.paths_1.length < 5000 ) {
                     this.paths_2 = this.paths_2.concat(this.spread(parseInt(this.find_last(this.paths_1[n])[1]), parseInt(this.find_last(this.paths_1[n])[0]), this.paths_1[n]));
+                } else if ( !this.found && this.paths_1.length >= 5000 ) {
+                    var best = this.find_best();
+                    this.paths_1 = [""];
+                    this.paths_2 = [];
+                    return best + ( this.find_path( this.find_last( best ) ) );
                 } else {
                     return this.correct;
                 }
             }
             this.paths_1 = this.paths_2;
             this.paths_2 = [];
+            this.clear();
         }
         return this.correct;
     }
@@ -41,52 +49,48 @@ class pathfinder {
         var last_action = path[path.length-1];
         var go = (direction: string): any => {
             if ( direction == "U" ) {
-                if ( y - 1 >= 0 && !this.visited(x, y - 1, path) ) {
+                if ( y - 1 >= 0 ) {
                     if ( this.check(x, y - 1, "E") ) {
                         return path + "U";
                     } else if ( this.check(x, y - 1, "D") ) {
                         this.found = true;
                         this.correct = path + "U";
-                        console.log(this.correct);
                         return;
                     }
                 } else {
                     return false;
                 }
             } else if ( direction == "D" ) {
-                if ( y + 1 <= this.board.length - 1 && !this.visited(x, y + 1, path) ) {
+                if ( y + 1 <= this.board.length - 1 ) {
                     if ( this.check(x, y + 1, "E") ) {
                         return path + "D";
                     } else if ( this.check(x, y + 1, "D") ) {
                         this.found = true;
                         this.correct = path + "D";
-                        console.log(this.correct);
                         return;
                     }
                 } else {
                     return false;
                 }
             } else if ( direction == "L" ) {
-                if ( x - 1 >= 0 && !this.visited(x - 1, y, path) ) {
+                if ( x - 1 >= 0 ) {
                     if ( this.check(x - 1, y, "E") ) {
                         return path + "L";
                     } else if ( this.check(x - 1, y, "D") ) {
                         this.found = true;
                         this.correct = path + "L";
-                        console.log(this.correct);
                         return;
                     }
                 } else {
                     return false;
                 }
             } else if ( direction == "R" ) {
-                if ( x + 1 <= this.board[0].length - 1 && !this.visited(x + 1, y, path) ) {
+                if ( x + 1 <= this.board[0].length - 1 ) {
                     if ( this.check(x + 1, y, "E") ) {
                         return path + "R";
                     } else if ( this.check(x + 1, y, "D") ) {
                         this.found = true;
                         this.correct = path + "R";
-                        console.log(this.correct);
                         return;
                     }
                 } else {
@@ -159,8 +163,8 @@ class pathfinder {
         return false;
     }
     private find_last(path: string): string[] {
-        var y = (this.find("S"))[0]
-        var x = (this.find("S"))[1]
+        var y = parseInt(this.start[0]);
+        var x = parseInt(this.start[1]);
         for ( var i = 0; i < path.length; i ++ ) {
             if ( path[i] == "U" ) {
                 y --;
@@ -175,7 +179,7 @@ class pathfinder {
         if ( path = "" ) {
             return this.find("S");
         }
-        return [y, x];
+        return [String(y), String(x)];
     }
     private decode(path: string): string[] {
         var y = (this.find("S"))[0]
@@ -195,15 +199,39 @@ class pathfinder {
         }
         return temp;
     }
-    private visited(x: number, y: number, path: string): boolean {
-        var decoded = this.decode(path);
-        for ( var i = 0; i < decoded.length; i ++ ) {
-            var d_y = (decoded[i].split("_"))[0];
-            var d_x = (decoded[i].split("_"))[1];
-            if ( x == parseInt(d_x) && y == parseInt(d_y) ) {
-                return true;
+    private clear(): void {
+        this.cleared = false;
+        if ( this.paths_1.length > 1000 ) {
+            var sum = 0;
+            for ( var i = 0; i < this.paths_1.length - 1; i ++ ) {
+                sum += (Math.abs(parseInt(this.find("S")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("S")[1]) - parseInt(this.find_last(this.paths_1[i])[1])));
+            }
+            var avg = Math.ceil(sum / (this.paths_1.length - 1));
+            for ( var i = this.paths_1.length - 1; i > 0; i -- ) {
+                if(Math.abs(parseInt(this.find("S")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("S")[1]) - parseInt(this.find_last(this.paths_1[i])[1])) < avg) {
+                    this.paths_1.splice(i, 1);
+                    this.cleared = true;
+                }
+            }
+            if ( this.cleared ) {
+                this.clear();
+            } else {
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+    private find_best(): string {
+        var index = 0;
+        var distance = Infinity;
+        for ( var i = 0; i < this.paths_1.length - 1; i ++ ) {
+            var temp = Math.abs(parseInt(this.find("D")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("D")[1]) - parseInt(this.find_last(this.paths_1[i])[1]));
+            if ( temp < distance ) {
+                index = i;
+                distance = temp;
             }
         }
-        return false;
+        return this.paths_1[index];
     }
 }
