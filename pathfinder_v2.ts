@@ -23,7 +23,7 @@ class pathfinder {
         }
         return false;
     }
-    public find_path(start: string[] = this.find["S"]): string {
+    public find_path(start: string[] = this.find("S")): string {
         this.start = start;
         for ( var i = 0; i < this.board.length * this.board[0].length; i ++ ) {
             for ( var n = 0; n < this.paths_1.length; n ++ ) {
