@@ -13,7 +13,7 @@
         <button onclick = "brd.set_tool('start')">START</button><br/>
         <button onclick = "brd.set_tool('destination')">END</button><br/>
         <button onclick = "brd.set_tool('empty')">DELETE</button><br/>
-        <button onclick = "(()=>{var a = new pathfinder(brd.tiles); brd.draw_path(a.decode(a.find_path()));})()">FIND PATH</button><br/>
+        <button onclick = "(()=>{var tiles = []; Object.assign(tiles, brd.tiles); var a = new pathfinder(tiles); brd.draw_path(a.decode(a.find_path(a.find('S'))));})()">FIND PATH</button><br/>
     </body>
     <script src = "./scripts/main.js"></script>
 </html>
