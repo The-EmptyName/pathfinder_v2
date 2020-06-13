@@ -1,16 +1,17 @@
 var pathfinder = /** @class */ (function () {
     function pathfinder(b) {
         this.b = b;
-        this.paths_1 = [""]; // example: ["URDL", "DLUR", "LURD", "RDLU"], gen 1 of paths
-        this.paths_2 = []; // gen 2 of paths
-        this.correct = ""; // correct path
-        this.found = false; // found correct path?
+        this.paths_1 = [""];
+        this.paths_2 = [];
+        this.correct = "";
+        this.found = false;
+        this.cleared = false;
+        this.start = [];
         this.board = b;
         if (!this.find("S") || !this.find("D")) {
             alert("Add both starting point and destination.");
             return;
         }
-        console.log(this.find("S"));
     }
     pathfinder.prototype.find = function (element) {
         for (var y = 0; y < this.board.length; y++) {
@@ -22,13 +23,19 @@ var pathfinder = /** @class */ (function () {
         }
         return false;
     };
-    pathfinder.prototype.find_path = function (start, end) {
-        if (start === void 0) { start = this.find("S"); }
-        if (end === void 0) { end = this.find("D"); }
+    pathfinder.prototype.find_path = function (start) {
+        if (start === void 0) { start = this.find["S"]; }
+        this.start = start;
         for (var i = 0; i < this.board.length * this.board[0].length; i++) {
             for (var n = 0; n < this.paths_1.length; n++) {
-                if (!this.found) {
+                if (!this.found && this.paths_1.length < 5000) {
                     this.paths_2 = this.paths_2.concat(this.spread(parseInt(this.find_last(this.paths_1[n])[1]), parseInt(this.find_last(this.paths_1[n])[0]), this.paths_1[n]));
+                }
+                else if (!this.found && this.paths_1.length >= 5000) {
+                    var best = this.find_best();
+                    this.paths_1 = [""];
+                    this.paths_2 = [];
+                    return best + (this.find_path(this.find_last(best)));
                 }
                 else {
                     return this.correct;
@@ -36,6 +43,7 @@ var pathfinder = /** @class */ (function () {
             }
             this.paths_1 = this.paths_2;
             this.paths_2 = [];
+            this.clear();
         }
         return this.correct;
     };
@@ -45,14 +53,13 @@ var pathfinder = /** @class */ (function () {
         var last_action = path[path.length - 1];
         var go = function (direction) {
             if (direction == "U") {
-                if (y - 1 >= 0 && !_this.visited(x, y - 1, path)) {
+                if (y - 1 >= 0) {
                     if (_this.check(x, y - 1, "E")) {
                         return path + "U";
                     }
                     else if (_this.check(x, y - 1, "D")) {
                         _this.found = true;
                         _this.correct = path + "U";
-                        console.log(_this.correct);
                         return;
                     }
                 }
@@ -61,14 +68,13 @@ var pathfinder = /** @class */ (function () {
                 }
             }
             else if (direction == "D") {
-                if (y + 1 <= _this.board.length - 1 && !_this.visited(x, y + 1, path)) {
+                if (y + 1 <= _this.board.length - 1) {
                     if (_this.check(x, y + 1, "E")) {
                         return path + "D";
                     }
                     else if (_this.check(x, y + 1, "D")) {
                         _this.found = true;
                         _this.correct = path + "D";
-                        console.log(_this.correct);
                         return;
                     }
                 }
@@ -77,14 +83,13 @@ var pathfinder = /** @class */ (function () {
                 }
             }
             else if (direction == "L") {
-                if (x - 1 >= 0 && !_this.visited(x - 1, y, path)) {
+                if (x - 1 >= 0) {
                     if (_this.check(x - 1, y, "E")) {
                         return path + "L";
                     }
                     else if (_this.check(x - 1, y, "D")) {
                         _this.found = true;
                         _this.correct = path + "L";
-                        console.log(_this.correct);
                         return;
                     }
                 }
@@ -93,14 +98,13 @@ var pathfinder = /** @class */ (function () {
                 }
             }
             else if (direction == "R") {
-                if (x + 1 <= _this.board[0].length - 1 && !_this.visited(x + 1, y, path)) {
+                if (x + 1 <= _this.board[0].length - 1) {
                     if (_this.check(x + 1, y, "E")) {
                         return path + "R";
                     }
                     else if (_this.check(x + 1, y, "D")) {
                         _this.found = true;
                         _this.correct = path + "R";
-                        console.log(_this.correct);
                         return;
                     }
                 }
@@ -178,8 +182,8 @@ var pathfinder = /** @class */ (function () {
         return false;
     };
     pathfinder.prototype.find_last = function (path) {
-        var y = (this.find("S"))[0];
-        var x = (this.find("S"))[1];
+        var y = parseInt(this.start[0]);
+        var x = parseInt(this.start[1]);
         for (var i = 0; i < path.length; i++) {
             if (path[i] == "U") {
                 y--;
@@ -197,7 +201,7 @@ var pathfinder = /** @class */ (function () {
         if (path = "") {
             return this.find("S");
         }
-        return [y, x];
+        return [String(y), String(x)];
     };
     pathfinder.prototype.decode = function (path) {
         var y = (this.find("S"))[0];
@@ -220,16 +224,42 @@ var pathfinder = /** @class */ (function () {
         }
         return temp;
     };
-    pathfinder.prototype.visited = function (x, y, path) {
-        var decoded = this.decode(path);
-        for (var i = 0; i < decoded.length; i++) {
-            var d_y = (decoded[i].split("_"))[0];
-            var d_x = (decoded[i].split("_"))[1];
-            if (x == parseInt(d_x) && y == parseInt(d_y)) {
-                return true;
+    pathfinder.prototype.clear = function () {
+        this.cleared = false;
+        if (this.paths_1.length > 1000) {
+            var sum = 0;
+            for (var i = 0; i < this.paths_1.length - 1; i++) {
+                sum += (Math.abs(parseInt(this.find("S")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("S")[1]) - parseInt(this.find_last(this.paths_1[i])[1])));
+            }
+            var avg = Math.ceil(sum / (this.paths_1.length - 1));
+            for (var i = this.paths_1.length - 1; i > 0; i--) {
+                if (Math.abs(parseInt(this.find("S")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("S")[1]) - parseInt(this.find_last(this.paths_1[i])[1])) < avg) {
+                    this.paths_1.splice(i, 1);
+                    this.cleared = true;
+                }
+            }
+            if (this.cleared) {
+                this.clear();
+            }
+            else {
+                return;
             }
         }
-        return false;
+        else {
+            return;
+        }
+    };
+    pathfinder.prototype.find_best = function () {
+        var index = 0;
+        var distance = Infinity;
+        for (var i = 0; i < this.paths_1.length - 1; i++) {
+            var temp = Math.abs(parseInt(this.find("D")[0]) - parseInt(this.find_last(this.paths_1[i])[0])) + Math.abs(parseInt(this.find("D")[1]) - parseInt(this.find_last(this.paths_1[i])[1]));
+            if (temp < distance) {
+                index = i;
+                distance = temp;
+            }
+        }
+        return this.paths_1[index];
     };
     return pathfinder;
 }());
